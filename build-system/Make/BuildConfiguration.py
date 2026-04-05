@@ -176,6 +176,13 @@ def copy_profiles_from_directory(source_path, destination_path, team_id, bundle_
             if not file_path.endswith('.mobileprovision'):
                 continue
 
+            # Check if file is already correctly named (for fake-codesigning)
+            base_name = file_name.replace('.mobileprovision', '')
+            if base_name in profile_name_mapping.values():
+                print('Copying pre-named profile: {} -> {}'.format(file_name, file_name))
+                shutil.copyfile(file_path, destination_path + '/' + file_name)
+                continue
+
             profile_data = run_executable_with_output('openssl', arguments=[
                 'smime',
                 '-inform',
