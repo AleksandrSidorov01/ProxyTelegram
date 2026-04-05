@@ -496,8 +496,18 @@ def resolve_configuration(base_path, bazel_command_line: BazelCommandLine, argum
         additional_codesigning_output_path=additional_codesigning_output_path
     )
     if codesigning_data.aps_environment is None:
-        print('Could not find a valid aps-environment entitlement in the provided provisioning profiles')
-        sys.exit(1)
+        print('Warning: Could not find a valid aps-environment entitlement in the provided provisioning profiles')
+        print('Using default aps-environment: development')
+        # Use a default value instead of failing
+        class CodesigningDataWithAps:
+            def __init__(self, original):
+                self.use_xcode_managed_codesigning = original.use_xcode_managed_codesigning
+                self.aps_environment = 'development'
+                # Copy other attributes if they exist
+                for attr in dir(original):
+                    if not attr.startswith('_') and attr not in ['use_xcode_managed_codesigning', 'aps_environment']:
+                        setattr(self, attr, getattr(original, attr))
+        codesigning_data = CodesigningDataWithAps(codesigning_data)
 
     if bazel_command_line is not None:
         build_configuration.write_to_variables_file(bazel_path=bazel_command_line.bazel, use_xcode_managed_codesigning=codesigning_data.use_xcode_managed_codesigning, aps_environment=codesigning_data.aps_environment, path=configuration_repository_path + '/variables.bzl')
