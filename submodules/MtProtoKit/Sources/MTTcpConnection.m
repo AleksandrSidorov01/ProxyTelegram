@@ -740,7 +740,8 @@ struct ctr_state {
     bool _useIntermediateFormat;
     
     int32_t _datacenterTag;
-    
+    NSInteger _datacenterId;
+
     uint8_t _quickAckByte;
     
     MTTimer *_responseTimeoutTimer;
@@ -785,6 +786,8 @@ struct ctr_state {
 
 @property (nonatomic, copy) id<MTTcpConnectionInterface> _Nonnull (^ _Nullable makeTcpConnectionInterface)(id<MTTcpConnectionInterfaceDelegate> _Nonnull delegate, dispatch_queue_t _Nonnull delegateQueue);
 
+@property (nonatomic, copy) id<MTTcpConnectionInterface> _Nullable (^ _Nullable makeDatacenterConnectionInterface)(id<MTTcpConnectionInterfaceDelegate> _Nonnull delegate, dispatch_queue_t _Nonnull delegateQueue, NSInteger datacenterId);
+
 @end
 
 @implementation MTTcpConnection
@@ -820,8 +823,10 @@ struct ctr_state {
         _interface = interface;
         _usageCalculationInfo = usageCalculationInfo;
         
+        _datacenterId = datacenterId;
         _makeTcpConnectionInterface = context.makeTcpConnectionInterface;
-        
+        _makeDatacenterConnectionInterface = context.makeDatacenterConnectionInterface;
+
         if (context.apiEnvironment.datacenterAddressOverrides[@(datacenterId)] != nil) {
             _firstPacketControlByte = [context.apiEnvironment tcpPayloadPrefix];
         }
@@ -914,7 +919,10 @@ struct ctr_state {
     {
         if (_socket == nil)
         {
-            if (_makeTcpConnectionInterface) {
+            if (_makeDatacenterConnectionInterface) {
+                _socket = _makeDatacenterConnectionInterface(self, [[MTTcpConnection tcpQueue] nativeQueue], _datacenterId);
+            }
+            if (_socket == nil && _makeTcpConnectionInterface) {
                 _socket = _makeTcpConnectionInterface(self, [[MTTcpConnection tcpQueue] nativeQueue]);
             }
             if (_socket == nil) {

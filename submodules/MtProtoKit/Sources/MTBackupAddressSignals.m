@@ -305,7 +305,8 @@ MTAtomic *sharedFetchConfigKeychains() {
     MTContext *context = [[MTContext alloc] initWithSerialization:currentContext.serialization encryptionProvider:currentContext.encryptionProvider apiEnvironment:apiEnvironment isTestingEnvironment:currentContext.isTestingEnvironment useTempAuthKeys:false];
     
     context.makeTcpConnectionInterface = currentContext.makeTcpConnectionInterface;
-    
+    context.makeDatacenterConnectionInterface = currentContext.makeDatacenterConnectionInterface;
+
     NSInteger authTokenMasterDatacenterId = 0;
     NSNumber *requiredAuthToken = nil;
     bool allowUnboundEphemeralKeys = true;

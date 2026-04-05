@@ -1,116 +1,174 @@
-# Telegram iOS Source Code Compilation Guide
+# ProxyTelegram
 
-We welcome all developers to use our API and source code to create applications on our platform.
-There are several things we require from **all developers** for the moment.
+[English](#english) | [Русский](#russian)
 
-# Creating your Telegram Application
+---
 
-1. [**Obtain your own api_id**](https://core.telegram.org/api/obtaining_api_id) for your application.
-2. Please **do not** use the name Telegram for your app — or make sure your users understand that it is unofficial.
-3. Kindly **do not** use our standard logo (white paper plane in a blue circle) as your app's logo.
-3. Please study our [**security guidelines**](https://core.telegram.org/mtproto/security_guidelines) and take good care of your users' data and privacy.
-4. Please remember to publish **your** code too in order to comply with the licences.
+<a name="english"></a>
+## English
 
-# Quick Compilation Guide
+### About
 
-## Get the Code
+ProxyTelegram is an unofficial fork of Telegram for iOS with built-in WebSocket tunnel support for bypassing blocks and censorship.
 
-```
-git clone --recursive -j8 https://github.com/TelegramMessenger/Telegram-iOS.git
-```
+### Features
 
-## Setup Xcode
+- **WebSocket Tunnel**: Automatic connection through WebSocket when Telegram is blocked
+- **Three Modes**:
+  - **Auto**: Automatically switches to WebSocket tunnel when blocking is detected
+  - **Always**: Always uses WebSocket tunnel for all connections
+  - **Disabled**: Uses only direct TCP connections
+- **Status Indicator**: Shows current connection type (Direct/Tunnel/Disconnected)
+- **Based on Official Telegram**: All original Telegram features are preserved
 
-Install Xcode (directly from https://developer.apple.com/download/applications or using the App Store).
+### Installation
 
-## Adjust Configuration
+#### Option 1: Download Pre-built IPA
 
-1. Generate a random identifier:
-```
-openssl rand -hex 8
-```
-2. Create a new Xcode project. Use `Telegram` as the Product Name. Use `org.{identifier from step 1}` as the Organization Identifier.
-3. Open `Keychain Access` and navigate to `Certificates`. Locate `Apple Development: your@email.address (XXXXXXXXXX)` and double tap the certificate. Under `Details`, locate `Organizational Unit`. This is the Team ID.
-4. Edit `build-system/template_minimal_development_configuration.json`. Use data from the previous steps.
+1. Download the latest `ProxyTelegram.ipa` from [Releases](../../releases)
+2. Install using one of these methods:
+   - **AltStore**: Open the IPA file in AltStore
+   - **Sideloadly**: Use Sideloadly to sign and install
+   - **Xcode**: Sign manually and install via Xcode
 
-## Generate an Xcode project
+#### Option 2: Build from Source
 
-```
+Requirements:
+- macOS 13+
+- Xcode 15.2+
+- Bazel 7.4.2+
+
+```bash
+# Clone the repository
+git clone --recursive https://github.com/YOUR_USERNAME/ProxyTelegram.git
+cd ProxyTelegram
+
+# Build
 python3 build-system/Make/Make.py \
-    --cacheDir="$HOME/telegram-bazel-cache" \
-    generateProject \
-    --configurationPath=build-system/template_minimal_development_configuration.json \
-    --xcodeManagedCodesigning
+  build \
+  --configurationPath=build-system/ptelegram-configuration.json \
+  --codesigningInformationPath=build-system/fake-codesigning \
+  --configuration=release_arm64
 ```
 
-# Advanced Compilation Guide
+### Usage
 
-## Xcode
+1. Open ProxyTelegram
+2. Go to **Settings** → **Data and Storage**
+3. Find **Anti-blocking** section
+4. Choose mode:
+   - **Auto** (recommended): Automatically uses tunnel when needed
+   - **Always**: Always uses tunnel
+   - **Disabled**: Tunnel disabled
 
-1. Copy and edit `build-system/appstore-configuration.json`.
-2. Copy `build-system/fake-codesigning`. Create and download provisioning profiles, using the `profiles` folder as a reference for the entitlements.
-3. Generate an Xcode project:
-```
+### Technical Details
+
+- **WebSocket Endpoints**: `wss://kws{1-5}.web.telegram.org/apiws`
+- **Transport Layer**: Custom MTProto transport implementation
+- **Auto Mode**: Tracks connection attempts and switches to tunnel after first failure
+- **DC Availability Cache**: Remembers unavailable datacenters for 5 minutes
+
+### Differences from Official Telegram
+
+- Custom Bundle ID: `com.aleksandr.ProxyTegram`
+- Custom API credentials (api_id/api_hash)
+- WebSocket tunnel support
+- Anti-blocking settings UI
+
+### Building
+
+See [TELEGRAM-FORK-SPEC.md](TELEGRAM-FORK-SPEC.md) for detailed build instructions and architecture documentation.
+
+### License
+
+This project is based on [Telegram for iOS](https://github.com/TelegramMessenger/Telegram-iOS) which is licensed under GPL v2.
+
+### Disclaimer
+
+This is an unofficial fork. Use at your own risk. The authors are not responsible for any issues arising from the use of this application.
+
+---
+
+<a name="russian"></a>
+## Русский
+
+### О проекте
+
+ProxyTelegram — неофициальный форк Telegram для iOS со встроенной поддержкой WebSocket туннеля для обхода блокировок и цензуры.
+
+### Возможности
+
+- **WebSocket Туннель**: Автоматическое подключение через WebSocket при блокировке Telegram
+- **Три режима работы**:
+  - **Авто**: Автоматически переключается на WebSocket туннель при обнаружении блокировки
+  - **Всегда**: Всегда использует WebSocket туннель для всех подключений
+  - **Выключено**: Использует только прямые TCP подключения
+- **Индикатор статуса**: Показывает текущий тип подключения (Прямое/Туннель/Отключено)
+- **На основе официального Telegram**: Все оригинальные функции Telegram сохранены
+
+### Установка
+
+#### Вариант 1: Скачать готовый IPA
+
+1. Скачайте последний `ProxyTelegram.ipa` из [Releases](../../releases)
+2. Установите одним из способов:
+   - **AltStore**: Откройте IPA файл в AltStore
+   - **Sideloadly**: Используйте Sideloadly для подписи и установки
+   - **Xcode**: Подпишите вручную и установите через Xcode
+
+#### Вариант 2: Сборка из исходников
+
+Требования:
+- macOS 13+
+- Xcode 15.2+
+- Bazel 7.4.2+
+
+```bash
+# Клонируйте репозиторий
+git clone --recursive https://github.com/YOUR_USERNAME/ProxyTelegram.git
+cd ProxyTelegram
+
+# Соберите
 python3 build-system/Make/Make.py \
-    --cacheDir="$HOME/telegram-bazel-cache" \
-    generateProject \
-    --configurationPath=configuration_from_step_1.json \
-    --codesigningInformationPath=directory_from_step_2
+  build \
+  --configurationPath=build-system/ptelegram-configuration.json \
+  --codesigningInformationPath=build-system/fake-codesigning \
+  --configuration=release_arm64
 ```
 
-## IPA
+### Использование
 
-1. Repeat the steps from the previous section. Use distribution provisioning profiles.
-2. Run:
-```
-python3 build-system/Make/Make.py \
-    --cacheDir="$HOME/telegram-bazel-cache" \
-    build \
-    --configurationPath=...see previous section... \
-    --codesigningInformationPath=...see previous section... \
-    --buildNumber=100001 \
-    --configuration=release_arm64
-```
+1. Откройте ProxyTelegram
+2. Перейдите в **Настройки** → **Данные и память**
+3. Найдите секцию **Антиблокировка**
+4. Выберите режим:
+   - **Авто** (рекомендуется): Автоматически использует туннель при необходимости
+   - **Всегда**: Всегда использует туннель
+   - **Выключено**: Туннель отключён
 
-# FAQ
+### Технические детали
 
-## Xcode is stuck at "build-request.json not updated yet"
+- **WebSocket эндпоинты**: `wss://kws{1-5}.web.telegram.org/apiws`
+- **Транспортный слой**: Кастомная реализация MTProto транспорта
+- **Авто режим**: Отслеживает попытки подключения и переключается на туннель после первой неудачи
+- **Кэш доступности DC**: Запоминает недоступные датацентры на 5 минут
 
-Occasionally, you might observe the following message in your build log:
-```
-"/Users/xxx/Library/Developer/Xcode/DerivedData/Telegram-xxx/Build/Intermediates.noindex/XCBuildData/xxx.xcbuilddata/build-request.json" not updated yet, waiting...
-```
+### Отличия от официального Telegram
 
-Should this occur, simply cancel the ongoing build and initiate a new one.
+- Кастомный Bundle ID: `com.aleksandr.ProxyTegram`
+- Кастомные API credentials (api_id/api_hash)
+- Поддержка WebSocket туннеля
+- UI настроек антиблокировки
 
-## Telegram_xcodeproj: no such package 
+### Сборка
 
-Following a system restart, the auto-generated Xcode project might encounter a build failure accompanied by this error:
-```
-ERROR: Skipping '@rules_xcodeproj_generated//generator/Telegram/Telegram_xcodeproj:Telegram_xcodeproj': no such package '@rules_xcodeproj_generated//generator/Telegram/Telegram_xcodeproj': BUILD file not found in directory 'generator/Telegram/Telegram_xcodeproj' of external repository @rules_xcodeproj_generated. Add a BUILD file to a directory to mark it as a package.
-```
+См. [TELEGRAM-FORK-SPEC.md](TELEGRAM-FORK-SPEC.md) для подробных инструкций по сборке и документации архитектуры.
 
-If you encounter this issue, re-run the project generation steps in the README.
+### Лицензия
 
+Этот проект основан на [Telegram for iOS](https://github.com/TelegramMessenger/Telegram-iOS), который распространяется под лицензией GPL v2.
 
-# Tips
+### Отказ от ответственности
 
-## Codesigning is not required for simulator-only builds
+Это неофициальный форк. Используйте на свой риск. Авторы не несут ответственности за любые проблемы, возникающие при использовании этого приложения.
 
-Add `--disableProvisioningProfiles`:
-```
-python3 build-system/Make/Make.py \
-    --cacheDir="$HOME/telegram-bazel-cache" \
-    generateProject \
-    --configurationPath=path-to-configuration.json \
-    --codesigningInformationPath=path-to-provisioning-data \
-    --disableProvisioningProfiles
-```
-
-## Versions
-
-Each release is built using a specific Xcode version (see `versions.json`). The helper script checks the versions of the installed software and reports an error if they don't match the ones specified in `versions.json`. It is possible to bypass these checks:
-
-```
-python3 build-system/Make/Make.py --overrideXcodeVersion build ... # Don't check the version of Xcode
-```

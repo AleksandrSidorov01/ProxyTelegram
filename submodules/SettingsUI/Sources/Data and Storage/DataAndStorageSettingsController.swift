@@ -26,6 +26,7 @@ private final class DataAndStorageControllerArguments {
     let openStorageUsage: () -> Void
     let openNetworkUsage: () -> Void
     let openProxy: () -> Void
+    let openWebSocketTunnel: () -> Void
     let openAutomaticDownloadConnectionType: (AutomaticDownloadConnectionType) -> Void
     let resetAutomaticDownload: () -> Void
     let toggleVoiceUseLessData: (Bool) -> Void
@@ -42,6 +43,7 @@ private final class DataAndStorageControllerArguments {
         openStorageUsage: @escaping () -> Void,
         openNetworkUsage: @escaping () -> Void,
         openProxy: @escaping () -> Void,
+        openWebSocketTunnel: @escaping () -> Void,
         openAutomaticDownloadConnectionType: @escaping (AutomaticDownloadConnectionType) -> Void,
         resetAutomaticDownload: @escaping () -> Void,
         toggleVoiceUseLessData: @escaping (Bool) -> Void,
@@ -57,6 +59,7 @@ private final class DataAndStorageControllerArguments {
         self.openStorageUsage = openStorageUsage
         self.openNetworkUsage = openNetworkUsage
         self.openProxy = openProxy
+        self.openWebSocketTunnel = openWebSocketTunnel
         self.openAutomaticDownloadConnectionType = openAutomaticDownloadConnectionType
         self.resetAutomaticDownload = resetAutomaticDownload
         self.toggleVoiceUseLessData = toggleVoiceUseLessData
@@ -131,6 +134,7 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
     
     case connectionHeader(PresentationTheme, String)
     case connectionProxy(PresentationTheme, String, String)
+    case connectionWebSocketTunnel(PresentationTheme, String, String)
     
     var section: ItemListSectionId {
         switch self {
@@ -148,7 +152,7 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
                 return DataAndStorageSection.other.rawValue
             case .sensitiveContent, .sensitiveContentInfo:
                 return DataAndStorageSection.sensitiveContent.rawValue
-            case .connectionHeader, .connectionProxy:
+            case .connectionHeader, .connectionProxy, .connectionWebSocketTunnel:
                 return DataAndStorageSection.connection.rawValue
         }
     }
@@ -203,6 +207,8 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
                 return 38
             case .connectionProxy:
                 return 39
+            case .connectionWebSocketTunnel:
+                return 40
         }
     }
     
@@ -352,6 +358,12 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
                 } else {
                     return false
                 }
+            case let .connectionWebSocketTunnel(lhsTheme, lhsText, lhsValue):
+                if case let .connectionWebSocketTunnel(rhsTheme, rhsText, rhsValue) = rhs, lhsTheme === rhsTheme, lhsText == rhsText, lhsValue == rhsValue {
+                    return true
+                } else {
+                    return false
+                }
         }
     }
     
@@ -454,6 +466,10 @@ private enum DataAndStorageEntry: ItemListNodeEntry {
             case let .connectionProxy(_, text, value):
                 return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: text, label: value, sectionId: self.section, style: .blocks, action: {
                     arguments.openProxy()
+                })
+            case let .connectionWebSocketTunnel(_, text, value):
+                return ItemListDisclosureItem(presentationData: presentationData, systemStyle: .glass, title: text, label: value, sectionId: self.section, style: .blocks, action: {
+                    arguments.openWebSocketTunnel()
                 })
         }
     }
@@ -676,6 +692,19 @@ private func dataAndStorageControllerEntries(context: AccountContext, state: Dat
     }
     entries.append(.connectionHeader(presentationData.theme, presentationData.strings.ChatSettings_ConnectionType_Title.uppercased()))
     entries.append(.connectionProxy(presentationData.theme, presentationData.strings.SocksProxySetup_Title, proxyValue))
+
+    // WebSocket Tunnel
+    let tunnelMode = WebSocketTunnelManager.shared.tunnelMode
+    let tunnelValue: String
+    switch tunnelMode {
+    case .auto:
+        tunnelValue = "Авто"
+    case .always:
+        tunnelValue = "Всегда"
+    case .disabled:
+        tunnelValue = "Выкл"
+    }
+    entries.append(.connectionWebSocketTunnel(presentationData.theme, "Антиблокировка", tunnelValue))
         
     return entries
 }
@@ -847,6 +876,8 @@ public func dataAndStorageController(context: AccountContext, focusOnItemTag: Da
         })
     }, openProxy: {
         pushControllerImpl?(proxySettingsController(context: context))
+    }, openWebSocketTunnel: {
+        pushControllerImpl?(webSocketTunnelSettingsController(context: context))
     }, openAutomaticDownloadConnectionType: { connectionType in
         pushControllerImpl?(autodownloadMediaConnectionTypeController(context: context, connectionType: connectionType))
     }, resetAutomaticDownload: {

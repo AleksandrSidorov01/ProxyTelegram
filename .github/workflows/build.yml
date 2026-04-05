@@ -1,7 +1,9 @@
-name: CI
+name: Build ProxyTelegram
 
 on:
   push:
+    branches: [ master ]
+  pull_request:
     branches: [ master ]
 
   workflow_dispatch:
@@ -11,7 +13,7 @@ jobs:
     runs-on: macos-13
 
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
         with:
           submodules: 'recursive'
           fetch-depth: '0'
@@ -20,6 +22,16 @@ jobs:
         run: |
           XCODE_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["xcode"]);')
           sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app/Contents/Developer
+
+      - name: Cache Bazel
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/bazel
+            /private/var/tmp/_bazel_containerhost
+          key: ${{ runner.os }}-bazel-${{ hashFiles('**/BUILD', '**/WORKSPACE') }}
+          restore-keys: |
+            ${{ runner.os }}-bazel-
 
       - name: Create canonical source directory
         run: |
@@ -53,7 +65,7 @@ jobs:
           python3 -u build-system/Make/Make.py \
             --bazelUserRoot="$BAZEL_USER_ROOT" \
             build \
-            --configurationPath="build-system/appstore-configuration.json" \
+            --configurationPath="build-system/ptelegram-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
             --configuration=release_arm64 \
             --buildNumber="$BUILD_NUMBER"
@@ -63,7 +75,7 @@ jobs:
           rm -rf "$OUTPUT_PATH"
           mkdir -p "$OUTPUT_PATH"
           for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/Telegram.ipa; do
-            cp "$f" $OUTPUT_PATH/
+            cp "$f" $OUTPUT_PATH/ProxyTelegram.ipa
           done
 
           # collect dsym
@@ -71,39 +83,65 @@ jobs:
           for f in bazel-out/applebin_ios-ios_arm*-opt-ST-*/bin/Telegram/*.dSYM; do
             cp -R "$f" build/DSYMs/
           done
-          zip -r "./$OUTPUT_PATH/Telegram.DSYMs.zip" build/DSYMs 1>/dev/null
+          zip -r "./$OUTPUT_PATH/ProxyTelegram.DSYMs.zip" build/DSYMs 1>/dev/null
+
+      - name: Upload IPA Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ProxyTelegram-${{ env.APP_VERSION }}-${{ env.BUILD_NUMBER }}
+          path: /Users/Shared/telegram-ios/build/artifacts/ProxyTelegram.ipa
+          retention-days: 30
+
+      - name: Upload DSYM Artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ProxyTelegram-DSYMs-${{ env.APP_VERSION }}-${{ env.BUILD_NUMBER }}
+          path: /Users/Shared/telegram-ios/build/artifacts/ProxyTelegram.DSYMs.zip
+          retention-days: 30
 
       - name: Create Release
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
         id: create_release
         uses: actions/create-release@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
-          tag_name: build-${{ env.BUILD_NUMBER }}
-          release_name: Telegram ${{ env.APP_VERSION }} (${{ env.BUILD_NUMBER }})
+          tag_name: v${{ env.APP_VERSION }}-build${{ env.BUILD_NUMBER }}
+          release_name: ProxyTelegram ${{ env.APP_VERSION }} (Build ${{ env.BUILD_NUMBER }})
           body: |
-            An unsigned build of Telegram for iOS ${{ env.APP_VERSION }} (${{ env.BUILD_NUMBER }})
+            ## ProxyTelegram ${{ env.APP_VERSION }} (Build ${{ env.BUILD_NUMBER }})
+
+            Unofficial Telegram fork with WebSocket tunnel support for bypassing blocks.
+
+            ### Features:
+            - WebSocket tunnel for anti-blocking
+            - Auto/Always/Disabled modes
+            - Based on Telegram ${{ env.APP_VERSION }}
+
+            **Note:** This is an unsigned build. You need to sign it yourself or use AltStore/Sideloadly.
           draft: false
           prerelease: false
 
       - name: Upload Release IPA
-        id: upload-release-ipa 
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        id: upload-release-ipa
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /Users/Shared/telegram-ios/build/artifacts/Telegram.ipa
-          asset_name: Telegram.ipa
+          asset_path: /Users/Shared/telegram-ios/build/artifacts/ProxyTelegram.ipa
+          asset_name: ProxyTelegram.ipa
           asset_content_type: application/zip
 
       - name: Upload Release DSYM
-        id: upload-release-dsym 
+        if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+        id: upload-release-dsym
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: /Users/Shared/telegram-ios/build/artifacts/Telegram.DSYMs.zip
-          asset_name: Telegram.DSYMs.zip
+          asset_path: /Users/Shared/telegram-ios/build/artifacts/ProxyTelegram.DSYMs.zip
+          asset_name: ProxyTelegram.DSYMs.zip
           asset_content_type: application/zip

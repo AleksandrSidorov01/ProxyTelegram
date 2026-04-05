@@ -516,12 +516,41 @@ func initializedNetwork(accountId: AccountRecordId, arguments: NetworkInitializa
                 } else {
                     useNetworkFramework = false
                 }
-                
+
                 if useNetworkFramework {
                     if #available(iOS 12.0, macOS 14.0, *) {
                         context.makeTcpConnectionInterface = { delegate, delegateQueue in
                             return NetworkFrameworkTcpConnectionInterface(delegate: delegate, delegateQueue: delegateQueue)
                         }
+                    }
+                }
+            }
+
+            // WebSocket tunnel: set datacenter-aware connection interface factory
+            if #available(iOS 13.0, *) {
+                context.makeDatacenterConnectionInterface = { delegate, delegateQueue, datacenterId in
+                    let manager = WebSocketTunnelManager.shared
+                    let mode = manager.tunnelMode
+                    let dcId = Int(datacenterId)
+
+                    guard WebSocketTunnelManager.wsEndpoint(forDC: dcId) != nil,
+                          manager.isDCAvailable(dcId) else {
+                        return nil
+                    }
+
+                    switch mode {
+                    case .disabled:
+                        return nil
+                    case .always:
+                        NSLog("[WSTunnel] Mode=always, using WS for DC \(dcId)")
+                        return WebSocketTunnelConnectionInterface(delegate: delegate, delegateQueue: delegateQueue, datacenterId: dcId)
+                    case .auto:
+                        if manager.shouldUseTunnelInAutoMode(forDC: dcId) {
+                            NSLog("[WSTunnel] Mode=auto, switching to WS for DC \(dcId)")
+                            return WebSocketTunnelConnectionInterface(delegate: delegate, delegateQueue: delegateQueue, datacenterId: dcId)
+                        }
+                        NSLog("[WSTunnel] Mode=auto, trying TCP first for DC \(dcId)")
+                        return nil
                     }
                 }
             }

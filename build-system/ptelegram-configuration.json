@@ -1,0 +1,14 @@
+{
+	"bundle_id": "com.aleksandr.ProxyTegram",
+	"api_id": "17086037",
+	"api_hash": "bf69680e3d576cffbd070adc9bb04b5c",
+	"team_id": "FAKETEAMID",
+	"app_center_id": "0",
+	"is_internal_build": "true",
+	"is_appstore_build": "false",
+	"appstore_id": "0",
+	"app_specific_url_scheme": "ptelegram",
+	"premium_iap_product_id": "",
+	"enable_siri": false,
+	"enable_icloud": false
+}
