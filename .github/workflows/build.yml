@@ -20,8 +20,9 @@ jobs:
 
       - name: Set active Xcode path
         run: |
-          XCODE_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["xcode"]);')
-          sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app/Contents/Developer
+          # Use latest available Xcode instead of checking versions.json
+          sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+          xcodebuild -version
 
       - name: Cache Bazel
         uses: actions/cache@v4
@@ -64,6 +65,7 @@ jobs:
           python3 build-system/Make/ImportCertificates.py --path build-system/fake-codesigning/certs
           python3 -u build-system/Make/Make.py \
             --bazelUserRoot="$BAZEL_USER_ROOT" \
+            --overrideXcodeVersion \
             build \
             --configurationPath="build-system/ptelegram-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
