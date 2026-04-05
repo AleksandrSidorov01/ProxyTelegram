@@ -13,7 +13,7 @@ jobs:
     runs-on: macos-14
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
         with:
           submodules: 'recursive'
           fetch-depth: '0'
@@ -24,7 +24,7 @@ jobs:
           sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app/Contents/Developer
 
       - name: Cache Bazel
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: |
             ~/.cache/bazel
@@ -86,14 +86,14 @@ jobs:
           zip -r "./$OUTPUT_PATH/ProxyTelegram.DSYMs.zip" build/DSYMs 1>/dev/null
 
       - name: Upload IPA Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ProxyTelegram-${{ env.APP_VERSION }}-${{ env.BUILD_NUMBER }}
           path: /Users/Shared/telegram-ios/build/artifacts/ProxyTelegram.ipa
           retention-days: 30
 
       - name: Upload DSYM Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: ProxyTelegram-DSYMs-${{ env.APP_VERSION }}-${{ env.BUILD_NUMBER }}
           path: /Users/Shared/telegram-ios/build/artifacts/ProxyTelegram.DSYMs.zip
