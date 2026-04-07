@@ -20,8 +20,8 @@ jobs:
 
       - name: Set active Xcode path
         run: |
-          # Use latest available Xcode instead of checking versions.json
-          sudo xcode-select -s /Applications/Xcode_15.2.app/Contents/Developer
+          XCODE_VERSION=$(cat versions.json | python3 -c 'import json,sys;obj=json.load(sys.stdin);print(obj["xcode"]);')
+          sudo xcode-select -s /Applications/Xcode_$XCODE_VERSION.app/Contents/Developer
           xcodebuild -version
 
       - name: Cache Bazel
@@ -66,7 +66,6 @@ jobs:
           python3 -u build-system/Make/Make.py \
             --bazelUserRoot="$BAZEL_USER_ROOT" \
             --overrideXcodeVersion \
-            --bazelArguments="--features=-swift.enable_checked_async_objc_bridging" \
             build \
             --configurationPath="build-system/ptelegram-configuration.json" \
             --codesigningInformationPath=build-system/fake-codesigning \
