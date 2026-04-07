@@ -9,13 +9,13 @@ Subject: [PATCH] Support arm simulator
  2 files changed, 15 insertions(+), 4 deletions(-)
 
 diff --git a/build/make/configure.sh b/build/make/configure.sh
-index 581042e38..88dc80e92 100644
+index ebaec96a5..1ef14ae2e 100644
 --- a/build/make/configure.sh
 +++ b/build/make/configure.sh
-@@ -1117,9 +1117,14 @@ EOF
-           soft_enable unit_tests
+@@ -1181,9 +1181,14 @@ EOF
+           esac
            ;;
- 
+
 -        darwin)
 +        darwin|iphonesimulator)
            if ! enabled external_build; then
@@ -29,10 +29,10 @@ index 581042e38..88dc80e92 100644
              CXX="$(${XCRUN_FIND} clang++)"
              CC="$(${XCRUN_FIND} clang)"
              AR="$(${XCRUN_FIND} ar)"
-@@ -1138,7 +1143,12 @@ EOF
+@@ -1200,7 +1205,12 @@ EOF
              add_cflags -arch ${tgt_isa}
              add_ldflags -arch ${tgt_isa}
- 
+
 -            alt_libc="$(show_darwin_sdk_path iphoneos)"
 +            if [ "${tgt_os}" == "iphonesimulator" ]; then
 +              add_cflags --target=arm64-apple-ios7.0-simulator
@@ -43,27 +43,27 @@ index 581042e38..88dc80e92 100644
              if [ -d "${alt_libc}" ]; then
                add_cflags -isysroot ${alt_libc}
              fi
-@@ -1167,7 +1177,7 @@ EOF
+@@ -1229,7 +1239,7 @@ EOF
                  ;;
              esac
- 
--            if [ "$(show_darwin_sdk_major_version iphoneos)" -gt 8 ]; then
-+            if [ "$(show_darwin_sdk_major_version $sdk_platform_name)" -gt 8 ]; then
+
+-            if [ "$(show_darwin_sdk_major_version iphoneos)" -gt 8 ] \
++            if [ "$(show_darwin_sdk_major_version $sdk_platform_name)" -gt 8 ] \
+                && [ "$(show_xcode_version | cut -d. -f1)" -lt 16 ]; then
                check_add_cflags -fembed-bitcode
                check_add_asflags -fembed-bitcode
-               check_add_ldflags -fembed-bitcode
 diff --git a/configure b/configure
-index beea65032..f29c9f327 100755
+index 57efa773c..7fa8527ed 100755
 --- a/configure
 +++ b/configure
-@@ -100,6 +100,7 @@ EOF
- all_platforms="${all_platforms} arm64-android-gcc"
- all_platforms="${all_platforms} arm64-darwin-gcc"
- all_platforms="${all_platforms} arm64-darwin20-gcc"
+@@ -105,6 +105,7 @@ all_platforms="${all_platforms} arm64-darwin22-gcc"
+ all_platforms="${all_platforms} arm64-darwin23-gcc"
+ all_platforms="${all_platforms} arm64-darwin24-gcc"
+ all_platforms="${all_platforms} arm64-darwin25-gcc"
 +all_platforms="${all_platforms} arm64-iphonesimulator-gcc"
- all_platforms="${all_platforms} arm64-darwin21-gcc"
  all_platforms="${all_platforms} arm64-linux-gcc"
  all_platforms="${all_platforms} arm64-win64-gcc"
--- 
+ all_platforms="${all_platforms} arm64-win64-vs15"
+--
 2.32.0 (Apple Git-132)
 
