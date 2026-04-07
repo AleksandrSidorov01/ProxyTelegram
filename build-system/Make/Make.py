@@ -63,6 +63,9 @@ class BazelCommandLine:
             # crashes.
             '--features=swift.use_global_module_cache',
 
+            # Disable checked async ObjC bridging (not supported in Xcode 15.x)
+            '--features=-swift.enable_checked_async_objc_bridging',
+
             # https://docs.bazel.build/versions/master/command-line-reference.html
             # Print the subcommand details in case of failure.
             '--verbose_failures',
